@@ -4,9 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Apollo 11: One Small Step</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body style="background:#0b1026;color:#fff;font-family:sans-serif;text-align:center;padding-top:80px;">
-  <h1>Apollo 11: One Small Step</h1>
-  <p>Test page is live.</p>
+<body>
+  <div id="game">
+    <div id="hud">
+      <div class="bar"><span>Mental fitness</span><div class="track"><div id="bar-mental" class="fill"></div></div></div>
+      <div class="bar"><span>Concentration</span><div class="track"><div id="bar-focus" class="fill"></div></div></div>
+      <div id="info"><span id="timer">5:00</span><span id="lifelines">Lifelines: 3</span><span id="coins">Coins: 0</span></div>
+    </div>
+    <div id="chips"></div>
+    <div id="card"></div>
+    <div id="scene"></div>
+    <div id="speaker"></div>
+    <div id="text"></div>
+    <div id="choices"></div>
+  </div>
+  <script src="game.js"></script>
 </body>
 </html>
