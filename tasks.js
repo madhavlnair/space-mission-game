@@ -145,3 +145,78 @@ async function runTask4(){
   const r = await binaryPuzzle(4);
   await say('Walter', { fast: 'Not many get that on the first try.', ok: 'Fine. Check your errors next time.', slow: 'Too slow. Again.' }[verdict(r)]);
 }
+
+function errorPuzzle(no){
+  return new Promise(res => {
+    startTask(no);
+    const parts = [
+      { t: 'Panel A: 8 bolts', e: false }, { t: 'Panel B: 7 bolts', e: true },
+      { t: 'Panel C: 8 bolts', e: false }, { t: 'Fuel tank: label reads OX', e: true },
+      { t: 'Oxidizer tank: label reads OX', e: false }, { t: 'Feed valve 1: arrow points down', e: false },
+      { t: 'Feed valve 2: arrow points up', e: true }, { t: 'Plate: Stage 2 drawn at the bottom', e: true },
+      { t: 'Plate: Stage 3 drawn at the top', e: false }, { t: 'Interstage length: 10.1 m here, 1.01 m in the table', e: true },
+      { t: 'Hatch seal: 8 bolts', e: false }, { t: 'Engine mount: 5 engines', e: false }
+    ];
+    const list = shuffle(parts), found = {};
+    let count = 0;
+    const box = $('choices');
+    function draw(msg){
+      $('speaker').textContent = 'Task 5: Fix the design errors';
+      $('text').textContent = 'Rules: 8 bolts per panel. Valves point down. Stages count 1 to 3 from the bottom. Fuel tanks read FUEL. One unit per measurement. Find the 5 errors (' + count + '/5).' + (msg ? '  ' + msg : '');
+      box.innerHTML = '';
+      list.forEach(p => {
+        const b = document.createElement('button'); b.className = 'choice'; b.textContent = p.t;
+        if(found[p.t]){ b.style.borderColor = '#6fcf97'; b.style.color = '#6fcf97'; b.disabled = true; }
+        b.onclick = () => pick(p); box.appendChild(b);
+      });
+      const h = document.createElement('button'); h.className = 'choice';
+      h.textContent = 'Use a lifeline (' + S.lifelines + ' left)'; h.onclick = life; box.appendChild(h);
+    }
+    function pick(p){
+      if(p.e){ found[p.t] = 1; count++; if(count >= 5){ res(finishTask()); return; } draw('Error found.'); return; }
+      change('focus', -5);
+      const f = checkFail();
+      if(f === 'restart-game'){ location.reload(); return; }
+      if(f === 'redo'){ Object.keys(found).forEach(k => delete found[k]); count = 0; draw('A bar fell too low. Redo the task (bars reset).'); return; }
+      draw('That one is fine.');
+    }
+    function life(){
+      S.lifelines--; drawBars();
+      if(S.lifelines <= 0){ Object.keys(found).forEach(k => delete found[k]); count = 0; startTask(no); draw('All lifelines used. The task restarts.'); return; }
+      const miss = list.find(p => p.e && !found[p.t]);
+      found[miss.t] = 1; count++;
+      if(count >= 5){ res(finishTask()); return; }
+      draw('Hint: an error was marked for you.');
+    }
+    draw();
+  });
+}
+
+async function runTask5(){
+  await card('<b>WINTER 1967-68</b><br>In January, the lunar module is tested in Earth orbit without a crew.');
+  scene('The drafting room, late. Only the desk lamps are on.');
+  await say('Walter', 'Five errors. This one decides whether you move up.');
+  await say('Dorothy', "Don't look at the big picture. Look at the small things that don't belong.");
+  await say('Richard', 'Some people are better at carrying than thinking.');
+  await ask([{ t: '"I\'ll do both."' }, { t: '(Ignore him.)' }, { t: '"Show me which part I got wrong."' }]);
+  const r = await errorPuzzle(5);
+  await say('Walter', { fast: 'All five. That is a first.', ok: 'All five, eventually.', slow: 'Too slow. Again.' }[verdict(r)]);
+}
+
+async function promotion1(){
+  await card('<b>SPRING 1968</b><br>In April, Apollo 6 flies a second uncrewed Saturn V test. The ride is rough, and engineers get to work on fixes.');
+  scene("Walter's office. The same gray walls, but the light seems warmer.");
+  await say('Walter', 'Mid-level, effective today. Harder problems, not an easier chair.');
+  await say('Walter', 'The board wants to know what to test first. Data card 1: engine problems caused 3 of the last 5 test delays. Data card 2: navigation errors caused 1 of the last 5.');
+  let r;
+  do {
+    r = await ask([
+      { t: '"Fuel system first. Engines are the biggest risk."', fx: { focus: 5 }, pick: 'fuel' },
+      { t: '"Guidance computer first. Navigation is the biggest risk."', pick: 'guidance' },
+      { t: '"Let me check the numbers again."', pick: 'again' }
+    ]);
+    if(r.pick === 'again') await say('Walter', 'Take another look: engines 3 of 5 delays, navigation 1 of 5.');
+  } while(r.pick === 'again');
+  S.decision1 = r.pick;
+  await say('Walter', 'Good reasoning. I will take it to the board. Go home. Sleep.');
+}

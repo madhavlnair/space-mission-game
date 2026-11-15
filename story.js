@@ -91,6 +91,6 @@ async function startGame(){
 
   scene('The corridor.');
   await say('Walter', 'Briefing room, five minutes. Bring a pencil.');
-  await runTask1(); await runTask2(); await runTask4(); scene('END OF STORY TEST');
+  await runTask1(); await runTask2(); await runTask4(); await runTask5(); await promotion1(); await runTask5(); await promotion1(); scene('END OF STORY TEST');
   await say('', 'Task 1 comes next. The story layer test is complete.');
 } 
