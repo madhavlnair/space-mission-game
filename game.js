@@ -133,4 +133,7 @@ async function testRun(){
   startTask(1);
   await testTask();
 }
-window.onload = () => { drawBars(); startGame(); };
+window.onload = () => {
+  drawBars();
+  if(location.hash === '#vending'){ testVending(); } else { startGame(); }
+};
