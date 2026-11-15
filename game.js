@@ -133,4 +133,4 @@ async function testRun(){
   startTask(1);
   await testTask();
 }
-window.onload = () => { drawBars(); testRun(); };
+window.onload = () => { drawBars(); startGame(); };
