@@ -73,3 +73,75 @@ async function runTask2(){
   });
   await say('Walter', { fast: 'Textbook.', ok: 'Acceptable.', slow: 'You will need to be faster than this.' }[verdict(r)]);
 }
+
+function binaryPuzzle(no){
+  return new Promise(res => {
+    startTask(no);
+    let target = '';
+    for(let i = 0; i < 48; i++) target += Math.random() < 0.5 ? '0' : '1';
+    const shown = target.match(/.{8}/g).join(' ');
+    const penal = {};
+    const box = $('choices'); box.innerHTML = '';
+    $('speaker').textContent = 'Task 4: The binary code';
+    const inp = document.createElement('input');
+    inp.autocomplete = 'off'; inp.spellcheck = false;
+    inp.style.cssText = 'font-family:inherit;font-size:18px;padding:10px;background:#111a3a;color:#f4f1de;border:3px solid #f4f1de;';
+    inp.onpaste = e => e.preventDefault(); inp.ondrop = e => e.preventDefault();
+    box.appendChild(inp);
+    const val = () => inp.value.replace(/\s/g, '');
+    function reset(){ inp.value = ''; Object.keys(penal).forEach(k => delete penal[k]); }
+    function render(msg){
+      const v = val();
+      let h = 'Type this string by hand (no paste): <b>' + shown + '</b><br>';
+      for(let i = 0; i < v.length; i++){
+        const ch = /[01]/.test(v[i]) ? v[i] : '?';
+        h += '<span style="color:' + (v[i] === target[i] ? '#6fcf97' : '#eb5757') + '">' + ch + '</span>';
+      }
+      if(msg) h += '<br>' + msg;
+      $('text').innerHTML = h;
+    }
+    function failCheck(){
+      const f = checkFail();
+      if(f === 'restart-game'){ location.reload(); return true; }
+      if(f === 'redo'){ reset(); render('A bar fell too low. Redo the task (bars reset).'); return true; }
+      return false;
+    }
+    inp.oninput = () => {
+      const v = val();
+      for(let i = 0; i < v.length - 1; i++){
+        if(v[i] !== target[i] && !penal[i]){ penal[i] = 1; change('mental', -2); }
+      }
+      if(failCheck()) return;
+      render();
+    };
+    const run = document.createElement('button'); run.className = 'choice'; run.textContent = 'Run the code';
+    run.onclick = () => {
+      if(val() === target){ res(finishTask()); return; }
+      change('focus', -5);
+      if(failCheck()) return;
+      render('The run failed: errors found. Fix them.');
+    };
+    const life = document.createElement('button'); life.className = 'choice'; life.textContent = 'Use a lifeline';
+    life.onclick = () => {
+      S.lifelines--; drawBars();
+      if(S.lifelines <= 0){ reset(); startTask(no); render('All lifelines used. The task restarts.'); return; }
+      const v = val(); let bad = -1;
+      for(let i = 0; i < v.length; i++){ if(v[i] !== target[i]){ bad = i; break; } }
+      const keep = bad >= 0 ? bad : v.length;
+      inp.value = target.slice(0, Math.min(48, keep + 4));
+      render('Lifeline: errors fixed and 4 digits filled in.');
+    };
+    box.appendChild(run); box.appendChild(life);
+    render(); inp.focus();
+  });
+}
+
+async function runTask4(){
+  await card('<b>WINTER 1967</b><br>Apollo computers run on code stored in hand-woven wire memory.');
+  scene('A quiet terminal room. Rows of lights, the soft clicking of machines.');
+  await say('Walter', 'Type this string by hand. No copy, no paste. Typos show in red.');
+  await say('Marcus', 'One wrong digit and the whole run goes sideways.');
+  await ask([{ t: '"Fix it now."' }, { t: '"Press on, fix it later."' }, { t: '"Ask Frank for a hint."' }]);
+  const r = await binaryPuzzle(4);
+  await say('Walter', { fast: 'Not many get that on the first try.', ok: 'Fine. Check your errors next time.', slow: 'Too slow. Again.' }[verdict(r)]);
+}
