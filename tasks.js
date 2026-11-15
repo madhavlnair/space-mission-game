@@ -220,3 +220,84 @@ async function promotion1(){
   S.decision1 = r.pick;
   await say('Walter', 'Good reasoning. I will take it to the board. Go home. Sleep.');
 }
+
+function pickCard(rd, msg){
+  return new Promise(res => {
+    const box = $('choices');
+    $('speaker').textContent = 'Task 7: Persuade the board';
+    $('text').textContent = 'Prescott: "' + rd.q + '"  Choose the data card that answers him.' + (msg ? '  ' + msg : '');
+    box.innerHTML = '';
+    shuffle(rd.cards.map((t, i) => ({ t, i }))).forEach(c => {
+      const b = document.createElement('button'); b.className = 'choice'; b.textContent = c.t;
+      b.onclick = () => {
+        if(c.i === 0){ res('ok'); return; }
+        change('focus', -5);
+        const f = checkFail();
+        if(f === 'restart-game'){ location.reload(); return; }
+        if(f === 'redo'){ res('redo'); return; }
+        pickCard(rd, 'Prescott frowns. That does not answer him.').then(res);
+      };
+      box.appendChild(b);
+    });
+    const h = document.createElement('button'); h.className = 'choice';
+    h.textContent = 'Use a lifeline (' + S.lifelines + ' left)';
+    h.onclick = () => {
+      S.lifelines--; drawBars();
+      if(S.lifelines <= 0){ startTask(7); res('redo'); return; }
+      res('ok');
+    };
+    box.appendChild(h);
+  });
+}
+
+async function debateTask(){
+  startTask(7);
+  const a = await ask([
+    { t: '"Skipping tests saves money now and costs lives later."' },
+    { t: '"Every test so far caught a real fault."' },
+    { t: '"Everyone else is spending more."', bad: true }
+  ]);
+  if(a.bad){ S.lifelines--; drawBars(); await say('Prescott', "What other people spend is not my concern. Go on."); }
+  const rounds = [
+    { q: 'Show me numbers. How often do tests find real faults?',
+      cards: ['Tests found a real fault in 4 of the last 5 runs.', 'The testing budget is a small part of the total.', 'Other programmes cost less.'] },
+    { q: 'And what does skipping them risk?',
+      cards: ['In January 1967 a ground test was not treated as hazardous. The Apollo 1 crew was lost.', 'Testing is slow and tiring.', 'Skipping tests would make the schedule look better.'] }
+  ];
+  let i = 0, msg = '';
+  while(i < rounds.length){
+    const r = await pickCard(rounds[i], msg); msg = '';
+    if(r === 'redo'){ i = 0; msg = 'A bar fell too low. Redo the task (bars reset).'; } else { i++; }
+  }
+  return finishTask();
+}
+
+async function runTask7(){
+  scene("Eli's desk.");
+  await say('', 'Richard stops by your desk, says nothing, and sets a sharpened pen down. He walks away.');
+  await ask([{ t: '"Thank you."' }, { t: '(Nod.)' }, { t: '(Leave the pen where it is.)' }]);
+  await card('<b>DECEMBER 1968</b><br>Apollo 8 flies around the Moon. Three men see its far side for the first time.');
+  scene('A long conference room. Dark wood. Prescott sits at the head of the table.');
+  await say('Prescott', 'Mr. Washington. I took a chance on you once. Convince me again.');
+  await say('Richard', 'He will be eaten alive. ...Probably.');
+  const r = await debateTask();
+  await say('', 'Marcus says nothing. He is watching Eli.');
+  await say('Prescott', { fast: 'The testing budget stays. (to Walter) Where did you find this one?', ok: 'The budget stays, but I want a report.', slow: 'Come back when you can be brief.' }[verdict(r)]);
+}
+
+async function promotion2(){
+  scene("Walter's office, late.");
+  await say('Walter', 'Senior scientist. I will not say it was unexpected. I will say it was earned.');
+  await say('Walter', 'Two landing sites. Flat site: safer ground, few landmarks to navigate by. Rough site: more landmarks, riskier ground. Your view?');
+  let r;
+  do {
+    r = await ask([
+      { t: '"The flat site. Safer ground."', pick: 'flat' },
+      { t: '"The rough site. Easier navigation."', pick: 'rough' },
+      { t: '"I need one more look at the data."', pick: 'again' }
+    ]);
+    if(r.pick === 'again') await say('Walter', 'Flat: safer ground, harder navigation. Rough: easier navigation, riskier landing.');
+  } while(r.pick === 'again');
+  S.decision2 = r.pick;
+  await say('Walter', 'Good. This is why I wanted you on this team.');
+}
